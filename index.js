@@ -2,11 +2,10 @@ const express = require('express')
 var morgan = require('morgan')
 const cors = require('cors')
 
+const app = express()
 
 app.use(cors())
-const app = express()
 app.use(morgan('tiny'))
-
 app.use(express.json())
 
 let notes = [
