@@ -1,3 +1,5 @@
+const Guy = require('./models/note')
+
 const express = require('express')
 var morgan = require('morgan')
 const cors = require('cors')
@@ -8,6 +10,8 @@ app.use(express.static('dist'))
 app.use(cors())
 app.use(morgan('tiny'))
 app.use(express.json())
+
+/*
 
 let notes = [
     { 
@@ -37,34 +41,43 @@ app.get('/info', (request, response) => {
     <p>${Date()}</p>`)
 })
 
-app.get('/api/persons', (request, response) => {
-  response.json(notes)
+const generateId = () => {
+    return Math.floor(Math.random()*1000)
+}
+
+
+
+app.delete('/api/persons/:id', (request, response) => {
+  Guy.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
+})
+*/
+
+app.get('/api/persons', (request, response, next) => {
+  Guy.find({}).then(notes => {
+    response.json(notes)
+  })
+  .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const note = notes.find(note => note.id === id)
+app.get('/api/persons/:id', (request, response, next) => {
+    Guy.findById(request.params.id).then(note => {
     if (note) {
         response.json(note)
       } else {
         response.status(404).end()
       }
+    })
+    .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    notes = notes.filter(note => note.id !== id)
-  
-    response.status(204).end()
-})
-
-const generateId = () => {
-    return Math.floor(Math.random()*1000)
-}
-  
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
-    const checklist = notes.find(guy => guy.name === body.name)
+    /*
+    const checklist = Guy.find(guy => guy.name === body.name)
 
     if (!body.name || !body.number) {
       return response.status(400).json({ 
@@ -78,20 +91,31 @@ app.post('/api/persons', (request, response) => {
             error: 'name is already registered' 
           })
     }
-  
-    const note = {
+    */
+    const note = new Guy({
       name: body.name,
       number: body.number,
-      id: generateId(),
-    }
-    console.log(checklist)
-    console.log(body.name)
+    })
 
-    notes = notes.concat(note)
-    response.json(note)
+    note.save().then(savedNote => {
+      response.json(savedNote)
+    })
+    .catch(error => next(error))
 })
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+
+  next(error)
+}
+
+app.use(errorHandler)
