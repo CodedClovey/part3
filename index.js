@@ -45,16 +45,16 @@ const generateId = () => {
     return Math.floor(Math.random()*1000)
 }
 
+*/
 
-
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   Guy.findByIdAndDelete(request.params.id)
     .then(result => {
       response.status(204).end()
     })
     .catch(error => next(error))
 })
-*/
+
 
 app.get('/api/persons', (request, response, next) => {
   Guy.find({}).then(notes => {
